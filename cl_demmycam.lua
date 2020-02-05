@@ -4,10 +4,11 @@ local cam
 local MODE = 1
 local ZERO = vector3(0,0,0)
 local SPEED = Config.Speed.Start
+local EXTRA = ""
 
 AddTextEntry('DCAMTARGETOBJECT','Model: ~a~~n~Location: ~a~~n~Heading: ~a~')
 AddTextEntry('DCAMTARGETOBJECTNET', 'Model: ~a~~n~Location: ~a~~n~Heading: ~a~~n~NetOwner: ~a~ (~1~)')
-AddTextEntry('DCAMMODE', 'DemmyCam Mode ~1~/~1~~n~~a~~n~Speed: ~1~%')
+AddTextEntry('DCAMMODE', 'DemmyCam Mode ~1~/~1~~n~~a~~n~Speed: ~1~%~n~~a~')
 
 function log(...)
     TriggerServerEvent('demmycam:log',...)
@@ -38,6 +39,10 @@ function startCam()
         SetCamRot(cam, rot, 2)
         SetCamFov(cam, fov)
 
+        if MODES[MODE].init then
+            MODES[MODE].init(MODES[MODE])
+        end
+
         log('started DemmyCam')
         ACTIVE = true
     end
@@ -58,6 +63,10 @@ function stopCam(teleport)
         end
         DestroyCam(getCam(), false)
         cam = nil
+
+        if MODES[MODE].cleanup then
+            MODES[MODE].cleanup(MODES[MODE])
+        end
 
         ClearFocus()
         NetworkClearVoiceProximityOverride()
@@ -93,6 +102,20 @@ function getRelativeLocation(location, rotation, distance)
     local rz = location.z + (math.sin(tX)) * distance
 
     return vector3(rx,ry,rz)
+end
+function normalToRotation(normal, refRotation)
+    --[[ Quat getRotationQuat(const Vector& from, const Vector& to){
+        Quat result;
+        Vector H = VecAdd(from, to);
+        H = VecNormalize(H);
+        result.w = VecDot(from, H);
+        result.x = from.y*H.z - from.z*H.y;
+        result.y = from.z*H.x - from.x*H.z;
+        result.z = from.x*H.y - from.y*H.x;
+        return result;
+    }
+    --]]
+    return quat(refRotation, normal)
 end
 function getMovementInput(location, rotation, frameTime)
     local multiplier = 1.0
@@ -225,92 +248,6 @@ function drawEntityInfo(entity, textLocation, networked)
     return model
 end
 
-local MODES = {
-    {
-        name = '👻 Possess',
-        marker = {
-            type = 28,
-            offset = vector3(0,0,0),
-            scale = 1.0,
-            color = {255, 255, 255, 128},
-        },
-        entityBox = true,
-        rayFlags = 7,
-        click = function(location, heading, entity, networked)
-            if entity then
-                if IsEntityAPed(entity) and not IsPedAPlayer(entity) then
-                    stopCam(true)
-                    ChangePlayerPed(PlayerId(), entity, true, true)
-                elseif IsEntityAVehicle(entity) then
-                    local driver = GetPedInVehicleSeat(entity, -1)
-                    if IsEntityAPed(driver) and not IsPedAPlayer(driver) then
-                        stopCam(true)
-                        ChangePlayerPed(PlayerId(), driver, true, true)
-                    end
-                end
-            end
-        end,
-    },
-    {
-        name = '📍 Location picker',
-        marker = {
-            type = 28,
-            offset = vector3(0,0,0),
-            scale = 0.1,
-            color = {255, 0, 0, 100},
-        },
-        entityBox = false,
-        rayFlags = 23,
-        click = function(location, heading, entity, networked)
-            local spec = string.format("{coords=vector3(%.3f, %.3f, %.3f),heading=%.3f},", location.x, location.y, location.z, heading)
-            TriggerEvent('chat:addMessage',{args={'Location',spec}})
-            log(spec)
-        end,
-    },
-    {
-        name = '🚪 Object picker',
-        marker = {
-            type = 43,
-            offset = vector3(0,0,0),
-            scale = 0.3,
-            color = {255, 0, 0, 100},
-        },
-        entityBox = true,
-        rayFlags = 17,
-        click = function(location, heading, entity, networked)
-            if entity then
-                local heading = GetEntityHeading(entity)
-                local model = GetEntityModel(entity)
-                local location = GetEntityCoords(entity)
-                local spec = string.format("{model=%i,coords=vector3(%.3f, %.3f, %.3f),heading=%.3f},", model, location.x, location.y, location.z, heading)
-                TriggerEvent('chat:addMessage',{args={'Object',spec}})
-                log(spec)
-            end
-        end,
-    },
-    {
-        name = '💣 Network entity deleter',
-        marker = {
-            type = 42,
-            offset = vector3(0,0,0),
-            scale = 1.0,
-            color = {255, 0, 0, 200},
-        },
-        entityBox = true,
-        rayFlags = 23,
-        click = function(location, heading, entity, networked)
-            if entity then
-                if networked then
-                    if not IsEntityAPed(entity) or not IsPedAPlayer(entity) then
-                        local owner = GetPlayerServerId(NetworkGetEntityOwner(entity))
-                        TriggerServerEvent('demmycam:deletenetworked', owner, NetworkGetNetworkIdFromEntity(entity))
-                    end
-                end
-            end
-        end,
-    },
-}
-
 function drawModeText()
     local modeName = MODES[MODE].name
     BeginTextCommandDisplayText('DCAMMODE')
@@ -321,6 +258,7 @@ function drawModeText()
     AddTextComponentInteger(#MODES)
     AddTextComponentSubstringPlayerName(modeName)
     AddTextComponentInteger(SPEED)
+    AddTextComponentSubstringPlayerName(EXTRA or "")
     EndTextCommandDisplayText(0.5, 0.1)
 
 end
@@ -345,10 +283,16 @@ function doCamFrame()
         SetCamCoord(cam, newLocation)
 
         if IsDisabledControlJustPressed(0, Config.Keys.SwitchMode) then
+            if MODES[MODE].cleanup then
+                MODES[MODE].cleanup(MODES[MODE])
+            end
             if MODE + 1 > #MODES then
                 MODE = 1
             else
                 MODE = MODE + 1
+            end
+            if MODES[MODE].init then
+                MODES[MODE].init(MODES[MODE])
             end
         end
         local modeData = MODES[MODE]
@@ -364,7 +308,7 @@ function doCamFrame()
         end
 
         local targetLocation = getRelativeLocation(location, rotation, 100)
-        local ray = StartShapeTestRay(newLocation, targetLocation, modeData.rayFlags, 0)
+        local ray = StartShapeTestRay(newLocation, targetLocation, modeData.rayFlags, modeData.ignore or 0)
         local someInt,hit,hitCoords,normal,entity = GetShapeTestResult(ray)
 
         local continue = true
@@ -395,7 +339,11 @@ function doCamFrame()
             end
 
             if modeData.click and IsDisabledControlJustPressed(0, 24) then
-                modeData.click(hitCoords, rotation.z, entity, networked)
+                if modeData.object and modeData.object.handle then
+                    modeData.click(hitCoords, rotation.z, modeData.object.handle, networked, normal)
+                else
+                    modeData.click(hitCoords, rotation.z, entity, networked, normal)
+                end
             end
 
             if ACTIVE then -- It could have changed during click!
@@ -403,20 +351,31 @@ function doCamFrame()
                 if entity and modeData.entityBox and drawEntityBox(entity, r, g, b, a) then
                     local model = drawEntityInfo(entity, hitCoords, networked)
                 else
-                    DrawMarker(
-                        modeData.marker.type, -- Type
-                        hitCoords + modeData.marker.offset,
-                        0.0, 0.0, 0.0, -- Direction
-                        0.0, 0.0, rotation.z, -- Rotation
-                        modeData.marker.scale, modeData.marker.scale, modeData.marker.scale,
-                        modeData.marker.color[1], modeData.marker.color[2], modeData.marker.color[3], modeData.marker.color[4],
-                        false, -- bobs
-                        false, -- face camera
-                        2, -- Cargo Cult
-                        false, -- rotates
-                        0, 0, -- texture
-                        false -- projects on entities
-                    )
+                    if modeData.marker then
+                        DrawMarker(
+                            modeData.marker.type, -- Type
+                            hitCoords + modeData.marker.offset,
+                            0.0, 0.0, 0.0, -- Direction
+                            0.0, 0.0, rotation.z, -- Rotation
+                            modeData.marker.scale, modeData.marker.scale, modeData.marker.scale,
+                            modeData.marker.color[1], modeData.marker.color[2], modeData.marker.color[3], modeData.marker.color[4],
+                            false, -- bobs
+                            false, -- face camera
+                            2, -- Cargo Cult
+                            false, -- rotates
+                            0, 0, -- texture
+                            false -- projects on entities
+                        )
+                    elseif modeData.object then
+                        if modeData.object.handle and DoesEntityExist(modeData.object.handle) then
+                            SetEntityCoordsNoOffset(modeData.object.handle, hitCoords, false, false, false)
+
+                            local rotation = quat(vector3(0,-3,0), normal)
+                            -- SetEntityHeading(modeData.object.handle, rotation.z)
+                            SetEntityQuaternion(modeData.object.handle, rotation)
+
+                        end
+                    end
                     if IsDisabledControlJustPressed(0, Config.Keys.Teleport) then
                         if #(hitCoords - ZERO) > 0.25 then
                             stopCam(true)
