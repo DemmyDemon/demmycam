@@ -399,7 +399,7 @@ Citizen.CreateThread(function()
     local ready = false
     while true do
         if ready then
-            if UpdateOnscreenKeyboard() == 3 then
+            if UpdateOnscreenKeyboard() == -1 then
                 if not Config.UseModifier then
                     DisableControlAction(1, Config.Keys.Toggle)
                 end
