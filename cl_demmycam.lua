@@ -399,7 +399,8 @@ Citizen.CreateThread(function()
     local ready = false
     while true do
         if ready then
-            if UpdateOnscreenKeyboard() == -1 then
+            OSKStatus = UpdateOnscreenKeyboard()
+            if OSKStatus == -1 or OSKStatus == 3 then
                 if not Config.UseModifier then
                     DisableControlAction(1, Config.Keys.Toggle)
                 end
