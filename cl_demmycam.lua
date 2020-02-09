@@ -48,8 +48,8 @@ function startCam()
     end
 end
 function stopCam(teleport)
-    log('ended DemmyCam')
     if ACTIVE then
+        log('ended DemmyCam')
         local player = PlayerId()
         if NetworkIsPlayerConcealed(player) then
             NetworkConcealPlayer(player, false, false)
