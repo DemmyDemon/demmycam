@@ -399,26 +399,23 @@ Citizen.CreateThread(function()
     local ready = false
     while true do
         if ready then
-            OSKStatus = UpdateOnscreenKeyboard()
-            if OSKStatus == -1 or OSKStatus == 3 then
-                if not Config.UseModifier then
-                    DisableControlAction(1, Config.Keys.Toggle)
-                end
-                if not IsPauseMenuActive() then
-                    if not PENDING then
-                        if not Config.UseModifier or IsDisabledControlPressed(0, Config.Keys.Modifier) then
-                            if IsDisabledControlJustPressed(0, Config.Keys.Toggle) then
-                                if ACTIVE then
-                                    stopCam()
-                                else
-                                    PENDING = true
-                                    TriggerServerEvent('demmycam:requestcam')
-                                end
+            if not Config.UseModifier then
+                DisableControlAction(1, Config.Keys.Toggle)
+            end
+            if not IsPauseMenuActive() then
+                if not PENDING then
+                    if not Config.UseModifier or IsDisabledControlPressed(0, Config.Keys.Modifier) then
+                        if IsDisabledControlJustPressed(0, Config.Keys.Toggle) then
+                            if ACTIVE then
+                                stopCam()
+                            else
+                                PENDING = true
+                                TriggerServerEvent('demmycam:requestcam')
                             end
                         end
                     end
-                    doCamFrame()
                 end
+                doCamFrame()
             end
             Citizen.Wait(0)
         else
