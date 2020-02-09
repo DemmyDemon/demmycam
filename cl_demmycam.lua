@@ -339,53 +339,50 @@ function doCamFrame()
             end
 
             if modeData.click and IsDisabledControlJustPressed(0, 24) then
-                if modeData.object and modeData.object.handle then
-                    modeData.click(hitCoords, rotation.z, modeData.object.handle, networked, normal)
-                else
-                    modeData.click(hitCoords, rotation.z, entity, networked, normal)
-                end
+                modeData.click(hitCoords, rotation.z, entity, networked, normal, modeData)
             end
 
             if ACTIVE then -- It could have changed during click!
 
                 if entity and modeData.entityBox and drawEntityBox(entity, r, g, b, a) then
                     local model = drawEntityInfo(entity, hitCoords, networked)
-                else
-                    if modeData.marker then
-                        DrawMarker(
-                            modeData.marker.type, -- Type
-                            hitCoords + modeData.marker.offset,
-                            0.0, 0.0, 0.0, -- Direction
-                            0.0, 0.0, rotation.z, -- Rotation
-                            modeData.marker.scale, modeData.marker.scale, modeData.marker.scale,
-                            modeData.marker.color[1], modeData.marker.color[2], modeData.marker.color[3], modeData.marker.color[4],
-                            false, -- bobs
-                            false, -- face camera
-                            2, -- Cargo Cult
-                            false, -- rotates
-                            0, 0, -- texture
-                            false -- projects on entities
-                        )
-                    elseif modeData.object then
-                        if modeData.object.handle and DoesEntityExist(modeData.object.handle) then
-                            SetEntityCoordsNoOffset(modeData.object.handle, hitCoords, false, false, false)
+                end
 
-                            local rotation = quat(vector3(0,-3,0), normal)
-                            -- SetEntityHeading(modeData.object.handle, rotation.z)
-                            SetEntityQuaternion(modeData.object.handle, rotation)
+                if modeData.marker then
+                    DrawMarker(
+                        modeData.marker.type, -- Type
+                        hitCoords + modeData.marker.offset,
+                        0.0, 0.0, 0.0, -- Direction
+                        0.0, 0.0, rotation.z, -- Rotation
+                        modeData.marker.scale, modeData.marker.scale, modeData.marker.scale,
+                        modeData.marker.color[1], modeData.marker.color[2], modeData.marker.color[3], modeData.marker.color[4],
+                        false, -- bobs
+                        false, -- face camera
+                        2, -- Cargo Cult
+                        false, -- rotates
+                        0, 0, -- texture
+                        false -- projects on entities
+                    )
+                end
+                if modeData.object then
+                    if modeData.object.handle and DoesEntityExist(modeData.object.handle) then
+                        SetEntityCoordsNoOffset(modeData.object.handle, hitCoords, false, false, false)
 
-                        end
+                        local rotation = quat(vector3(0,-3,0), normal)
+                        -- SetEntityHeading(modeData.object.handle, rotation.z)
+                        SetEntityQuaternion(modeData.object.handle, rotation)
+
                     end
-                    if IsDisabledControlJustPressed(0, Config.Keys.Teleport) then
-                        if #(hitCoords - ZERO) > 0.25 then
-                            stopCam(true)
-                            Citizen.Wait(0)
-                            local playerPed = PlayerPedId()
-                            SetEntityCoords(playerPed, hitCoords, false, false, false, true)
-                            SetEntityHeading(playerPed, rotation.z)
-                            SetGameplayCamRelativeHeading(0.0)
-                            SetGameplayCamRelativePitch(rotation.x, 1.0)
-                        end
+                end
+                if IsDisabledControlJustPressed(0, Config.Keys.Teleport) then
+                    if #(hitCoords - ZERO) > 0.25 then
+                        stopCam(true)
+                        Citizen.Wait(0)
+                        local playerPed = PlayerPedId()
+                        SetEntityCoords(playerPed, hitCoords, false, false, false, true)
+                        SetEntityHeading(playerPed, rotation.z)
+                        SetGameplayCamRelativeHeading(0.0)
+                        SetGameplayCamRelativePitch(rotation.x, 1.0)
                     end
                 end
             end

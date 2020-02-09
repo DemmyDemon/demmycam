@@ -9,7 +9,7 @@ MODES = {
         },
         entityBox = true,
         rayFlags = 7,
-        click = function(location, heading, entity, networked)
+        click = function(location, heading, entity, networked, normal, modeData)
             if entity then
                 if IsEntityAPed(entity) and not IsPedAPlayer(entity) then
                     stopCam(true)
@@ -34,7 +34,7 @@ MODES = {
         },
         entityBox = false,
         rayFlags = 23,
-        click = function(location, heading, entity, networked, normal)
+        click = function(location, heading, entity, networked, normal, modeData)
             local spec = string.format("{coords=vector3(%.3f, %.3f, %.3f),heading=%.3f},", location.x, location.y, location.z, heading)
             TriggerEvent('chat:addMessage',{args={'Location',spec}})
             log(spec)
@@ -59,7 +59,7 @@ MODES = {
         end,
     },
     {
-        name = '🔒 Lock panel placement',
+        name = '🔒 Wall lock panel placement',
         object = {
             --model = `ba_prop_battle_secpanel`,
             --model = `v_res_tre_alarmbox`,
@@ -97,12 +97,77 @@ MODES = {
         end,
         entityBox = false,
         rayFlags = 23,
-        click = function(location, heading, entity, networked, normal)
-            local location = GetEntityCoords(entity)
-            local normal = GetEntityRotation(entity, 2)
-            local spec = string.format("{coords=vector3(%.3f, %.3f, %.3f),rot=vector3(%.3f, %.3f, %.3f)},", location.x, location.y, location.z, normal.x, normal.y, normal.z)
-            TriggerEvent('chat:addMessage',{args={'Location',spec}})
-            log(spec)
+        click = function(location, heading, entity, networked, normal, modeData)
+            if modeData.object and modeData.object.handle then
+                local handle = modeData.object.handle
+                local location = GetEntityCoords(handle)
+                local normal = GetEntityRotation(handle, 2)
+                local spec = string.format("{coords=vector3(%.3f, %.3f, %.3f),rot=vector3(%.3f, %.3f, %.3f)},", location.x, location.y, location.z, normal.x, normal.y, normal.z)
+                TriggerEvent('chat:addMessage',{args={'Location',spec}})
+                log(spec)
+            end
+        end,
+    },
+    {
+        name = '🔒🚪 Door lock panel placement',
+        object = {
+            --model = `ba_prop_battle_secpanel`,
+            --model = `v_res_tre_alarmbox`,
+            --model = `prop_wall_light_08a`,
+            --model = `v_ilev_chopshopswitch`,
+            model = `prop_ld_keypad_01`,
+        },
+        init = function(modeData)
+            if modeData.object.model and IsModelValid(modeData.object.model) then
+                if not HasModelLoaded(modeData.object.model) then
+                    RequestModel(modeData.object.model)
+                    local begin = GetGameTimer()
+                    while not HasModelLoaded(modeData.object.model) and GetGameTimer() <= begin + (modeData.object.timeout or 5000) do
+                        Citizen.Wait(100)
+                    end
+                end
+                if HasModelLoaded(modeData.object.model) then
+                    modeData.object.handle = CreateObject(modeData.object.model, hitCoords, false, false, false)
+                    --SetObjectAsNoLongerNeeded(modeData.object.handle)
+                    SetModelAsNoLongerNeeded(modeData.object.model)
+                    SetEntityCollision(modeData.object.handle, false, false)
+                    modeData.ignore = modeData.object.handle
+                else
+                    TriggerEvent('chat:addMessage',{args={'ERROR','Failed to load model'}})
+                end
+            end
+        end,
+        cleanup = function(modeData)
+            if modeData.object.handle and DoesEntityExist(modeData.object.handle) then
+                SetEntityAsMissionEntity(modeData.object.handle)
+                DeleteEntity(modeData.object.handle)
+                modeData.object.handle = nil
+                modeData.ignore = nil
+            end
+        end,
+        entityBox = true,
+        rayFlags = 23,
+        click = function(location, heading, entity, networked, normal, modeData)
+            if entity and modeData.object and modeData.object.handle then
+                
+                local handle = modeData.object.handle
+                local keypadLocation = GetEntityCoords(handle)
+                local keypadRotation = GetEntityRotation(handle, 2)
+                
+                local doorLocation = GetEntityCoords(entity)
+                local doorRotation = GetEntityRotation(entity, 2)
+
+                local offsetLocation = GetOffsetFromEntityGivenWorldCoords(entity, keypadLocation)
+                local offsetRotation = keypadRotation - doorRotation
+
+                local spec = string.format(
+                    "{door=?,offset=vector3(%.3f, %.3f, %.3f),rot=vector3(%.3f, %.3f, %.3f)},",
+                    offsetLocation.x, offsetLocation.y, offsetLocation.z, offsetRotation.x, offsetRotation.y, offsetRotation.z
+                )
+
+                TriggerEvent('chat:addMessage',{args={'Location',spec}})
+                log(spec)
+            end
         end,
     },
     {
@@ -115,7 +180,7 @@ MODES = {
         },
         entityBox = true,
         rayFlags = 17,
-        click = function(location, heading, entity, networked)
+        click = function(location, heading, entity, networked, normal, modeData)
             if entity then
                 local heading = GetEntityHeading(entity)
                 local model = GetEntityModel(entity)
@@ -136,7 +201,7 @@ MODES = {
         },
         entityBox = true,
         rayFlags = 23,
-        click = function(location, heading, entity, networked)
+        click = function(location, heading, entity, networked, normal, modeData)
             if entity then
                 if networked then
                     if not IsEntityAPed(entity) or not IsPedAPlayer(entity) then
