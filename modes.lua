@@ -212,4 +212,25 @@ MODES = {
             end
         end,
     },
+    {
+        name = '💣 Local entity deleter',
+        marker = {
+            type = 42,
+            offset = vector3(0,0,0),
+            scale = 1.0,
+            color = {255, 0, 0, 200},
+        },
+        entityBox = true,
+        rayFlags = 23,
+        click = function(location, heading, entity, networked, normal, modeData)
+            if entity then
+                if not networked then
+                    if not IsEntityAPed(entity) or not IsPedAPlayer(entity) then
+                        SetEntityAsMissionEntity(entity, true, true)
+                        DeleteEntity(entity)
+                    end
+                end
+            end
+        end,
+    },
 }
