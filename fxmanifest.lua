@@ -7,4 +7,4 @@ games { 'gta5' }
 
 shared_scripts { 'config.lua' }
 server_scripts { 'sv_demmycam.lua' }
-client_scripts { 'modes.lua', 'cl_demmycam.lua' }
+client_scripts { 'modes.lua', 'pickone.lua', 'cl_demmycam.lua' }

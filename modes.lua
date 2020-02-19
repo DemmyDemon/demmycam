@@ -1,6 +1,7 @@
 MODES = {
     {
-        name = '👻 Possess',
+        name = 'Possess',
+        symbol = '👻',
         marker = {
             type = 28,
             offset = vector3(0,0,0),
@@ -25,7 +26,8 @@ MODES = {
         end,
     },
     {
-        name = '📍 Location picker',
+        name = 'Location picker',
+        symbol = '📍',
         marker = {
             type = 28,
             offset = vector3(0,0,0),
@@ -41,7 +43,8 @@ MODES = {
         end,
     },
     {
-        name = '🎥 Camera location',
+        name = 'Camera location',
+        symbol = '🎥',
         marker = {
             type = 28,
             offset = vector3(0,0,0),
@@ -59,7 +62,8 @@ MODES = {
         end,
     },
     {
-        name = '🔒 Wall lock panel placement',
+        name = 'Wall lock panel placement',
+        symbol = '🔒',
         object = {
             --model = `ba_prop_battle_secpanel`,
             --model = `v_res_tre_alarmbox`,
@@ -109,7 +113,8 @@ MODES = {
         end,
     },
     {
-        name = '🔒🚪 Door lock panel placement',
+        name = 'Door lock panel placement',
+        symbol = '🔒🚪',
         object = {
             --model = `ba_prop_battle_secpanel`,
             --model = `v_res_tre_alarmbox`,
@@ -171,7 +176,8 @@ MODES = {
         end,
     },
     {
-        name = '🚪 Object picker',
+        name = 'Object picker',
+        symbol = '🚪',
         marker = {
             type = 43,
             offset = vector3(0,0,0),
@@ -192,7 +198,8 @@ MODES = {
         end,
     },
     {
-        name = '💣 Network entity deleter',
+        name = 'Network entity deleter',
+        symbol = '💣',
         marker = {
             type = 42,
             offset = vector3(0,0,0),
@@ -213,7 +220,8 @@ MODES = {
         end,
     },
     {
-        name = '💣 Local entity deleter',
+        name = 'Local entity deleter',
+        symbol = '💣',
         marker = {
             type = 42,
             offset = vector3(0,0,0),

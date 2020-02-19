@@ -5,6 +5,7 @@ local MODE = 1
 local ZERO = vector3(0,0,0)
 local SPEED = Config.Speed.Start
 local EXTRA = ""
+local modeButtons = PickOne:new()
 
 AddTextEntry('DCAMTARGETOBJECT','Model: ~a~~n~Location: ~a~~n~Heading: ~a~')
 AddTextEntry('DCAMTARGETOBJECTNET', 'Model: ~a~~n~Location: ~a~~n~Heading: ~a~~n~NetOwner: ~a~ (~1~)')
@@ -250,6 +251,9 @@ end
 
 function drawModeText()
     local modeName = MODES[MODE].name
+    if MODES[MODE].symbol then
+        modeName = MODES[MODE].symbol..' '..modeName
+    end
     BeginTextCommandDisplayText('DCAMMODE')
     SetTextScale(0.25,0.25)
     SetTextOutline()
@@ -264,6 +268,7 @@ function drawModeText()
 end
 
 function doCamFrame()
+    -- modeButtons:_draw(0.0, 0.0)
     if ACTIVE then
         disableFuckingEverything()
         local frameTime = GetFrameTime()
@@ -283,16 +288,19 @@ function doCamFrame()
         SetCamCoord(cam, newLocation)
 
         if IsDisabledControlJustPressed(0, Config.Keys.SwitchMode) then
-            if MODES[MODE].cleanup then
-                MODES[MODE].cleanup(MODES[MODE])
-            end
-            if MODE + 1 > #MODES then
-                MODE = 1
-            else
-                MODE = MODE + 1
-            end
-            if MODES[MODE].init then
-                MODES[MODE].init(MODES[MODE])
+            local newMode = modeButtons:pick()
+            if newMode and newMode ~= MODE then
+
+                if MODES[MODE].cleanup then
+                    MODES[MODE].cleanup(MODES[MODE])
+                end
+
+                MODE = newMode
+
+                if MODES[MODE].init then
+                    MODES[MODE].init(MODES[MODE])
+                end
+
             end
         end
         local modeData = MODES[MODE]
@@ -421,6 +429,12 @@ Citizen.CreateThread(function()
         else
             if NetworkIsSessionStarted() then
                 ready = true
+                for index, data in ipairs(MODES) do
+                    modeButtons:addButton({
+                        label = data.name,
+                        value = index,
+                    })
+                end
             else
                 Citizen.Wait(100)
             end
