@@ -110,6 +110,7 @@ function PickOne:pick()
         self:_disableControls()
         local hoveredButton = self:_draw(cursorX,cursorY)
         if IsDisabledControlJustPressed(0, 24) then
+            Citize.Wait(0) -- So that click doesn't also happen in the requesting loop
             if hoveredButton then
                 return hoveredButton.value
             else
