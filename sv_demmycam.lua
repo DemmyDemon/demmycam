@@ -39,3 +39,18 @@ RegisterNetEvent('demmycam:log')
 AddEventHandler ('demmycam:log',function(...)
     log(string.format("%i %s",source, GetPlayerName(source)), ...)
 end)
+RegisterNetEvent('demmycam:output')
+AddEventHandler ('demmycam:output', function(...)
+    local numElements = select('#', ...)
+    local elements = {...}
+    local line
+    for i=1,numElements do
+        local entry = elements[i]
+        if not line then
+            line = tostring(entry)
+        else
+            line = line..' '..tostring(entry)
+        end
+    end
+    Citizen.Trace(line..'\n')
+end)

@@ -14,6 +14,9 @@ AddTextEntry('DCAMMODE', 'DemmyCam Mode ~1~/~1~~n~~a~~n~Speed: ~1~%~n~~a~')
 function log(...)
     TriggerServerEvent('demmycam:log',...)
 end
+function out(...)
+    TriggerServerEvent('demmycam:output', ...)
+end
 
 function getCam()
     if not cam or not DoesCamExist(cam) then

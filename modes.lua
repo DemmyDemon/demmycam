@@ -39,7 +39,7 @@ MODES = {
         click = function(location, heading, entity, networked, normal, modeData)
             local spec = string.format("{coords=vector3(%.3f, %.3f, %.3f),heading=%.3f},", location.x, location.y, location.z, heading)
             TriggerEvent('chat:addMessage',{args={'Location',spec}})
-            log(spec)
+            out(spec)
         end,
     },
     {
@@ -58,7 +58,7 @@ MODES = {
             local location = GetFinalRenderedCamCoord()
             local spec = string.format("{coords=vector3(%.3f,%.3f,%.3f),rot=vector3(%.3f,%.3f,%.3f)}", location.x, location.y, location.z, rotation.x, rotation.y, rotation.z)
             TriggerEvent('chat:addMessage',{args={'CamLocation',spec}})
-            log(spec)
+            out(spec)
         end,
     },
     {
@@ -108,7 +108,7 @@ MODES = {
                 local normal = GetEntityRotation(handle, 2)
                 local spec = string.format("{coords=vector3(%.3f, %.3f, %.3f),rot=vector3(%.3f, %.3f, %.3f)},", location.x, location.y, location.z, normal.x, normal.y, normal.z)
                 TriggerEvent('chat:addMessage',{args={'Location',spec}})
-                log(spec)
+                out(spec)
             end
         end,
     },
@@ -166,12 +166,12 @@ MODES = {
                 local offsetRotation = keypadRotation - doorRotation
 
                 local spec = string.format(
-                    "{door=?,offset=vector3(%.3f, %.3f, %.3f),rot=vector3(%.3f, %.3f, %.3f)},",
+                    "{door=1,offset=vector3(%.3f, %.3f, %.3f),rot=vector3(%.3f, %.3f, %.3f)},",
                     offsetLocation.x, offsetLocation.y, offsetLocation.z, offsetRotation.x, offsetRotation.y, offsetRotation.z
                 )
 
                 TriggerEvent('chat:addMessage',{args={'Location',spec}})
-                log(spec)
+                out(spec)
             end
         end,
     },
@@ -188,12 +188,13 @@ MODES = {
         rayFlags = 17,
         click = function(location, heading, entity, networked, normal, modeData)
             if entity then
-                local heading = GetEntityHeading(entity)
+                --local heading = GetEntityHeading(entity)
                 local model = GetEntityModel(entity)
                 local location = GetEntityCoords(entity)
-                local spec = string.format("{model=%i,coords=vector3(%.3f, %.3f, %.3f),heading=%.3f},", model, location.x, location.y, location.z, heading)
+                --local spec = string.format("{model=%i,coords=vector3(%.3f, %.3f, %.3f),heading=%.3f},", model, location.x, location.y, location.z, heading)
+                local spec = string.format("{model=%i,coords=vector3(%.3f, %.3f, %.3f)},", model, location.x, location.y, location.z)
                 TriggerEvent('chat:addMessage',{args={'Object',spec}})
-                log(spec)
+                out(spec)
             end
         end,
     },
@@ -258,7 +259,7 @@ MODES = {
             location = location + vector3(0,0,1)
             local spec = string.format("{coords=vector3(%.3f, %.3f, %.3f),heading=%.3f},", location.x, location.y, location.z, heading)
             TriggerEvent('chat:addMessage',{args={'Location',spec}})
-            log(spec)
+            out(spec)
         end,
     },
 }
