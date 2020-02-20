@@ -204,7 +204,7 @@ MODES = {
             type = 42,
             offset = vector3(0,0,0),
             scale = 1.0,
-            color = {255, 0, 0, 200},
+            color = {0, 255, 0, 200},
         },
         entityBox = true,
         rayFlags = 23,
@@ -239,6 +239,26 @@ MODES = {
                     end
                 end
             end
+        end,
+    },
+    {
+        name = 'Teleport destination',
+        symbol = '⚡',
+        marker = {
+            type = 2,
+            offset = vector3(0,0,0.1),
+            rotation = vector3(90,0,0),
+            scale = 0.2,
+            color = {240, 100, 240, 200},
+        },
+        entityBox = false,
+        rayFlags = 23,
+        click = function(location, heading, entity, networked, normal, modeData)
+            heading = (heading + 180.0) % 360.0
+            location = location + vector3(0,0,1)
+            local spec = string.format("{coords=vector3(%.3f, %.3f, %.3f),heading=%.3f},", location.x, location.y, location.z, heading)
+            TriggerEvent('chat:addMessage',{args={'Location',spec}})
+            log(spec)
         end,
     },
 }

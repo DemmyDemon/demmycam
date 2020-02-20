@@ -268,7 +268,6 @@ function drawModeText()
 end
 
 function doCamFrame()
-    -- modeButtons:_draw(0.0, 0.0)
     if ACTIVE then
         disableFuckingEverything()
         local frameTime = GetFrameTime()
@@ -357,16 +356,26 @@ function doCamFrame()
                 end
 
                 if modeData.marker then
+                    local markerLocation = hitCoords
+                    if modeData.marker.offset then
+                        markerLocation = markerLocation + modeData.marker.offset
+                    end
+                    local markerRotation = vector3(0,0,rotation.z)
+                    if modeData.marker.rotation then
+                        markerRotation = vector3(modeData.marker.rotation.x, modeData.marker.rotation.y + rotation.z, modeData.marker.rotation.z)
+                    end
                     DrawMarker(
                         modeData.marker.type, -- Type
                         hitCoords + modeData.marker.offset,
                         0.0, 0.0, 0.0, -- Direction
-                        0.0, 0.0, rotation.z, -- Rotation
+                        markerRotation.x,
+                        markerRotation.y,
+                        markerRotation.z,
                         modeData.marker.scale, modeData.marker.scale, modeData.marker.scale,
                         modeData.marker.color[1], modeData.marker.color[2], modeData.marker.color[3], modeData.marker.color[4],
                         false, -- bobs
                         false, -- face camera
-                        2, -- Cargo Cult
+                        1, -- Cargo Cult (Rotation order?)
                         false, -- rotates
                         0, 0, -- texture
                         false -- projects on entities
