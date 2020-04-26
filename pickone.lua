@@ -7,7 +7,7 @@ function PickOne:new()
         fontSize = 0.3,
         widest = 0.0,
         verticalSpace = 0.04,
-        verticalOffset = -0.003,
+        verticalOffset = -0.015,
         itemHeight = 0.029,
         buttons = {},
         colors = {
@@ -107,6 +107,7 @@ function PickOne:pick()
         SetMouseCursorActiveThisFrame()
         local cursorX = GetDisabledControlNormal(0, 239)
         local cursorY = GetDisabledControlNormal(0, 240)
+        cursorY = cursorY + self.verticalOffset
         self:_disableControls()
         local hoveredButton = self:_draw(cursorX,cursorY)
         if IsDisabledControlJustPressed(0, 24) then
