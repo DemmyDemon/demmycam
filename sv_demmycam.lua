@@ -54,3 +54,7 @@ AddEventHandler ('demmycam:output', function(...)
     end
     Citizen.Trace(line..'\n')
 end)
+
+RegisterCommand('demmycam', function(source, args, raw)
+    TriggerClientEvent('demmycam:togglecam', source)
+end, true)

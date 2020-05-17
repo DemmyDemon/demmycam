@@ -6,6 +6,9 @@ local ZERO = vector3(0,0,0)
 local SPEED = Config.Speed.Start
 local EXTRA = ""
 local modeButtons = PickOne:new()
+local wasDisplayingRadar = false
+
+RegisterKeyMapping('demmycam', 'Toggle freecam', 'keyboard', 'F11')
 
 AddTextEntry('DCAMTARGETOBJECT','Model: ~a~~n~Location: ~a~~n~Heading: ~a~')
 AddTextEntry('DCAMTARGETOBJECTNET', 'Model: ~a~~n~Location: ~a~~n~Heading: ~a~~n~NetOwner: ~a~ (~1~)')
@@ -47,6 +50,9 @@ function startCam()
             MODES[MODE].init(MODES[MODE])
         end
 
+        wasDisplayingRadar = IsMinimapRendering()
+        DisplayRadar(false)
+
         log('started DemmyCam')
         ACTIVE = true
     end
@@ -74,6 +80,7 @@ function stopCam(teleport)
 
         ClearFocus()
         NetworkClearVoiceProximityOverride()
+        DisplayRadar(wasDisplayingRadar)
     end
     ACTIVE = false
 end
@@ -419,22 +426,7 @@ Citizen.CreateThread(function()
     local ready = false
     while true do
         if ready then
-            if not Config.UseModifier then
-                DisableControlAction(1, Config.Keys.Toggle)
-            end
             if not IsPauseMenuActive() then
-                if not PENDING then
-                    if not Config.UseModifier or IsDisabledControlPressed(0, Config.Keys.Modifier) then
-                        if IsDisabledControlJustPressed(0, Config.Keys.Toggle) then
-                            if ACTIVE then
-                                stopCam()
-                            else
-                                PENDING = true
-                                TriggerServerEvent('demmycam:requestcam')
-                            end
-                        end
-                    end
-                end
                 doCamFrame()
             end
             Citizen.Wait(0)
@@ -467,6 +459,14 @@ AddEventHandler ('demmycam:startcam', function()
     startCam()
 end)
 
+RegisterNetEvent('demmycam:togglecam')
+AddEventHandler ('demmycam:togglecam', function()
+    if ACTIVE then
+        stopCam()
+    else
+        startCam()
+    end
+end)
 RegisterNetEvent('demmycam:delete')
 AddEventHandler ('demmycam:delete', function(netID)
     local entity = NetworkGetEntityFromNetworkId(netID)
