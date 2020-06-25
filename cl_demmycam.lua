@@ -10,6 +10,14 @@ local wasDisplayingRadar = false
 
 RegisterKeyMapping('demmycam', 'Toggle freecam', 'keyboard', 'F11')
 
+local startMode = GetResourceKvpInt('DemmycamMode')
+if startMode and startMode > 0 then
+    if MODES[startMode] then
+        print('Last mode used was ' .. startMode)
+        MODE = startMode
+    end
+end
+
 AddTextEntry('DCAMTARGETOBJECT','Model: ~a~~n~Location: ~a~~n~Heading: ~a~')
 AddTextEntry('DCAMTARGETOBJECTNET', 'Model: ~a~~n~Location: ~a~~n~Heading: ~a~~n~NetOwner: ~a~ (~1~)')
 AddTextEntry('DCAMMODE', 'DemmyCam Mode ~1~/~1~~n~~a~~n~Speed: ~1~%~n~~a~')
@@ -157,6 +165,65 @@ function getMovementInput(location, rotation, frameTime)
     return location
 end
 
+function drawCross(position, size, r, g, b, a, forward, right, up)
+
+    r = r or 255
+    g = g or 0
+    b = b or 0
+    a = a or 40
+
+    forward = forward or vector3(0,1,0)
+    right = right or vector3(1,0,0)
+    up = up or vector3(0,0,1)
+    size = size or 0.5
+
+    local back = position - (forward * size)
+    local front = position + (forward * size)
+    DrawLine(back, front, r, g, b, a)
+
+    local above = position + (up * size)
+    local below = position - (up * size)
+    DrawLine(above, below, r, g, b, a)
+
+    local rightof = position + (right * size)
+    local leftof = position - (right * size)
+    DrawLine(rightof, leftof, r, g, b, a)
+
+end
+
+function drawEntityGuides(entity, size, r, g, b, a)
+    if entity then
+
+        r = r or 255
+        g = g or 0
+        b = b or 0
+        a = a or 40
+        size = size or 1.0
+
+        local forward, right, up, position = GetEntityMatrix(entity)
+        drawCross(position, size, r, g, b, a, forward, right, up)
+
+        local model = GetEntityModel(entity)
+        local min,max = GetModelDimensions(model)
+
+        local top_right = GetOffsetFromEntityInWorldCoords(entity, vector3(max.x, 0, max.z))
+        drawCross(top_right, size/2, r, g, b, a, forward, right, up)
+
+        local bottom_right = GetOffsetFromEntityInWorldCoords(entity, vector3(max.x, 0, min.z))
+        drawCross(bottom_right, size/2, r, g, b, a, forward, right, up)
+
+        local top_left = GetOffsetFromEntityInWorldCoords(entity, vector3(min.x, 0, max.z))
+        drawCross(top_left, size/2, r, g, b, a, forward, right, up)
+
+        local bottom_left = GetOffsetFromEntityInWorldCoords(entity, vector3(min.x, 0, min.z))
+        drawCross(bottom_left, size/2, r, g, b, a, forward, right, up)
+
+        local center = (top_right + bottom_right + top_left + bottom_left)/4
+        drawCross(center, size/2, r, g, b, a, forward, right, up)
+
+    end
+end
+
 function drawEntityBox(entity,r,g,b,a)
     if entity then
 
@@ -299,7 +366,7 @@ function doCamFrame()
         if IsDisabledControlJustPressed(0, Config.Keys.SwitchMode) then
             local newMode = modeButtons:pick()
             if newMode and newMode ~= MODE then
-
+                SetResourceKvpInt('DemmycamMode', newMode)
                 if MODES[MODE].cleanup then
                     MODES[MODE].cleanup(MODES[MODE])
                 end
@@ -313,6 +380,17 @@ function doCamFrame()
             end
         end
         local modeData = MODES[MODE]
+
+        if modeData.increase then
+            if IsDisabledControlJustPressed(0, Config.Keys.Increase) then
+                modeData.increase(modeData)
+            end
+        end
+        if modeData.decrease then
+            if IsDisabledControlJustPressed(0, Config.Keys.Decrease) then
+                modeData.decrease(modeData)
+            end
+        end
 
         drawModeText()
 
@@ -337,7 +415,7 @@ function doCamFrame()
             elseif not IsEntityAnObject(entity) and not IsEntityAPed(entity) and not IsEntityAVehicle(entity) then
                 entity = nil
             end
-            
+
             local r = 255
             local g = 0
             local b = 0
@@ -393,11 +471,18 @@ function doCamFrame()
                 end
                 if modeData.object then
                     if modeData.object.handle and DoesEntityExist(modeData.object.handle) then
-                        SetEntityCoordsNoOffset(modeData.object.handle, hitCoords, false, false, false)
-
+                        local moveTo = hitCoords
                         local rotation = quat(vector3(0,-3,0), normal)
                         -- SetEntityHeading(modeData.object.handle, rotation.z)
                         SetEntityQuaternion(modeData.object.handle, rotation)
+                        if modeData.object.relativeOffset then
+                            local rot = GetEntityRotation(modeData.object.handle) -- Because converting from quaternion makes me cry
+                            moveTo = getRelativeLocation(moveTo, rot, modeData.object.relativeOffset)
+                        end
+                        SetEntityCoordsNoOffset(modeData.object.handle, moveTo, false, false, false)
+                        if modeData.object.guides then
+                            drawEntityGuides(modeData.object.handle, modeData.object.guides, 255, 255, 0, 128)
+                        end
 
                     end
                 end

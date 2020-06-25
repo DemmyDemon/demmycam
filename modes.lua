@@ -1,5 +1,26 @@
 MODES = {
     {
+        name = 'Camera location',
+        symbol = '🎥',
+        --[[
+        marker = {
+            type = 28,
+            offset = vector3(0,0,0),
+            scale = 0.1,
+            color = {255, 255, 0, 100},
+        },
+        --]]
+        entityBox = false,
+        rayFlags = 23,
+        click = function()
+            local rotation = GetFinalRenderedCamRot(2)
+            local location = GetFinalRenderedCamCoord()
+            local spec = string.format("{coords=vector3(%.3f,%.3f,%.3f),rot=vector3(%.3f,%.3f,%.3f)}", location.x, location.y, location.z, rotation.x, rotation.y, rotation.z)
+            TriggerEvent('chat:addMessage',{args={'CamLocation',spec}})
+            out(spec)
+        end,
+    },
+    {
         name = 'Possess',
         symbol = '👻',
         marker = {
@@ -43,22 +64,64 @@ MODES = {
         end,
     },
     {
-        name = 'Camera location',
-        symbol = '🎥',
+        name = 'FloatyDraw sign',
+        symbol = '🚧',
+        object = {
+            model = `xm_prop_x17_tv_scrn_19`,
+            relativeOffset = 0.07,
+            guides = 1.0,
+        },
         marker = {
             type = 28,
             offset = vector3(0,0,0),
-            scale = 0.1,
-            color = {255, 255, 0, 100},
+            scale = 0.025,
+            color = {255, 255, 255, 100},
         },
         entityBox = false,
         rayFlags = 23,
-        click = function()
-            local rotation = GetFinalRenderedCamRot(2)
-            local location = GetFinalRenderedCamCoord()
-            local spec = string.format("{coords=vector3(%.3f,%.3f,%.3f),rot=vector3(%.3f,%.3f,%.3f)}", location.x, location.y, location.z, rotation.x, rotation.y, rotation.z)
-            TriggerEvent('chat:addMessage',{args={'CamLocation',spec}})
-            out(spec)
+        init = function(modeData)
+            if modeData.object.model and IsModelValid(modeData.object.model) then
+                if not HasModelLoaded(modeData.object.model) then
+                    RequestModel(modeData.object.model)
+                    local begin = GetGameTimer()
+                    while not HasModelLoaded(modeData.object.model) and GetGameTimer() <= begin + (modeData.object.timeout or 5000) do
+                        Citizen.Wait(100)
+                    end
+                end
+                if HasModelLoaded(modeData.object.model) then
+                    modeData.object.handle = CreateObject(modeData.object.model, hitCoords, false, false, false)
+                    --SetObjectAsNoLongerNeeded(modeData.object.handle)
+                    SetModelAsNoLongerNeeded(modeData.object.model)
+                    SetEntityCollision(modeData.object.handle, false, false)
+                    modeData.ignore = modeData.object.handle
+                else
+                    TriggerEvent('chat:addMessage',{args={'ERROR','Failed to load model'}})
+                end
+            end
+        end,
+        cleanup = function(modeData)
+            if modeData.object.handle and DoesEntityExist(modeData.object.handle) then
+                SetEntityAsMissionEntity(modeData.object.handle)
+                DeleteEntity(modeData.object.handle)
+                modeData.object.handle = nil
+                modeData.ignore = nil
+            end
+        end,
+        click = function(location, heading, entity, networked, normal, modeData)
+            if modeData.object and modeData.object.handle then
+                local handle = modeData.object.handle
+                local location = GetEntityCoords(handle)
+                local heading = GetEntityHeading(handle)
+                local spec = string.format("{coords=vector3(%.3f, %.3f, %.3f),heading=%.3f},", location.x, location.y, location.z, heading)
+                TriggerEvent('chat:addMessage',{args={'Location',spec}})
+                out(spec)
+            end
+        end,
+        increase = function(modeData)
+            modeData.object.relativeOffset = modeData.object.relativeOffset - 0.01
+        end,
+        decrease = function(modeData)
+            modeData.object.relativeOffset = modeData.object.relativeOffset + 0.01
         end,
     },
     {

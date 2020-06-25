@@ -25,5 +25,7 @@ Config = {
         Right = 35, -- D
         Up = 22, -- INPUT_JUMP, Space
         Down = 36, -- INPUT_DUCK
+        Increase = 16, -- INPUT_SELECT_NEXT_WEAPON, Scroll up
+        Decrease = 17, -- INPUT_SELECT_PREV_WEAPON, Scroll down
     },
 }
